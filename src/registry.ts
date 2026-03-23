@@ -1,0 +1,83 @@
+// registry.ts — Maps detected technologies to skill and agent files
+
+import type { DetectedTech } from './detect.js';
+import type { SkillFile } from './skills.js';
+import {
+  SKILL_TYPESCRIPT, SKILL_NODEJS, SKILL_EXPRESS, SKILL_NEXTJS, SKILL_REACT,
+  SKILL_TAILWIND, SKILL_SWIFTUI, SKILL_STRIPE, SKILL_PRISMA, SKILL_POSTGRESQL,
+  SKILL_AZURE, SKILL_DOCKER, SKILL_GO, SKILL_PYTHON, SKILL_RUST,
+  AGENT_BACKEND, AGENT_FRONTEND, AGENT_IOS, AGENT_REVIEWER, AGENT_DEVOPS,
+} from './skills.js';
+
+interface SkillEntry {
+  triggers: DetectedTech[];
+  files: SkillFile[];
+}
+
+const SKILL_REGISTRY: SkillEntry[] = [
+  { triggers: ['typescript'],             files: [SKILL_TYPESCRIPT] },
+  { triggers: ['nodejs', 'express'],      files: [SKILL_NODEJS, SKILL_EXPRESS] },
+  { triggers: ['nextjs'],                 files: [SKILL_NEXTJS, SKILL_REACT] },
+  { triggers: ['react'],                  files: [SKILL_REACT] },
+  { triggers: ['tailwind'],               files: [SKILL_TAILWIND] },
+  { triggers: ['swiftui'],               files: [SKILL_SWIFTUI] },
+  { triggers: ['stripe'],                files: [SKILL_STRIPE] },
+  { triggers: ['prisma'],                files: [SKILL_PRISMA] },
+  { triggers: ['postgresql'],            files: [SKILL_POSTGRESQL] },
+  { triggers: ['azure'],                 files: [SKILL_AZURE] },
+  { triggers: ['docker'],                files: [SKILL_DOCKER] },
+  { triggers: ['go'],                    files: [SKILL_GO] },
+  { triggers: ['python', 'django'],      files: [SKILL_PYTHON] },
+  { triggers: ['rust'],                  files: [SKILL_RUST] },
+];
+
+const AGENT_REGISTRY: SkillEntry[] = [
+  {
+    triggers: ['nodejs', 'express', 'nextjs', 'typescript', 'prisma', 'postgresql', 'go', 'python', 'rust'],
+    files: [AGENT_BACKEND],
+  },
+  {
+    triggers: ['nextjs', 'react', 'tailwind'],
+    files: [AGENT_FRONTEND],
+  },
+  {
+    triggers: ['swiftui'],
+    files: [AGENT_IOS],
+  },
+  {
+    triggers: ['azure', 'docker'],
+    files: [AGENT_DEVOPS],
+  },
+];
+
+// Code reviewer is always included
+const ALWAYS: SkillFile[] = [AGENT_REVIEWER];
+
+export function selectFiles(
+  detected: DetectedTech[],
+  includeAgents: boolean,
+): SkillFile[] {
+  const detectedSet = new Set(detected);
+  const selected = new Map<string, SkillFile>();
+
+  // Always include
+  for (const f of ALWAYS) selected.set(f.path, f);
+
+  // Skills
+  for (const entry of SKILL_REGISTRY) {
+    if (entry.triggers.some(t => detectedSet.has(t))) {
+      for (const f of entry.files) selected.set(f.path, f);
+    }
+  }
+
+  // Agents
+  if (includeAgents) {
+    for (const entry of AGENT_REGISTRY) {
+      if (entry.triggers.some(t => detectedSet.has(t))) {
+        for (const f of entry.files) selected.set(f.path, f);
+      }
+    }
+  }
+
+  return Array.from(selected.values());
+}
