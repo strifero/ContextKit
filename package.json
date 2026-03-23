@@ -1,0 +1,36 @@
+{
+  "name": "contextkit",
+  "version": "1.0.0",
+  "description": "One command gives Claude Code your entire codebase.",
+  "keywords": ["claude", "claude-code", "ai", "developer-tools", "skills", "context"],
+  "homepage": "https://github.com/strifero/ContextKit",
+  "bugs": "https://github.com/strifero/ContextKit/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/strifero/ContextKit.git"
+  },
+  "license": "MIT",
+  "author": "Strife Technologies <hello@strifetech.com> (https://strifetech.com)",
+  "type": "module",
+  "bin": {
+    "contextkit": "./dist/index.js"
+  },
+  "main": "./dist/index.js",
+  "files": ["dist", "README.md", "LICENSE"],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js",
+    "prepublishOnly": "npm run build"
+  },
+  "dependencies": {
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
