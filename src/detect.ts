@@ -9,17 +9,21 @@ export type DetectedTech =
   | 'express'
   | 'nextjs'
   | 'react'
+  | 'vite'
+  | 'vue'
   | 'tailwind'
   | 'swiftui'
   | 'stripe'
   | 'prisma'
   | 'postgresql'
+  | 'mongodb'
   | 'azure'
   | 'docker'
   | 'go'
   | 'python'
   | 'django'
-  | 'rust';
+  | 'rust'
+  | 'bun';
 
 interface PackageJson {
   dependencies?: Record<string, string>;
@@ -87,9 +91,27 @@ export async function detectStack(dir: string): Promise<DetectedTech[]> {
     detected.add('react');
   }
 
+  // Vite
+  if (
+    hasFile(dir, 'vite.config.js', 'vite.config.ts', 'vite.config.mjs') ||
+    hasDep(pkg, 'vite')
+  ) {
+    detected.add('vite');
+  }
+
+  // Vue
+  if (hasDep(pkg, 'vue', '@vue/core', 'nuxt')) {
+    detected.add('vue');
+  }
+
   // Node.js
   if (pkg && !detected.has('nextjs')) {
     detected.add('nodejs');
+  }
+
+  // Bun
+  if (hasFile(dir, 'bun.lockb', 'bun.lock')) {
+    detected.add('bun');
   }
 
   // Express
@@ -123,9 +145,14 @@ export async function detectStack(dir: string): Promise<DetectedTech[]> {
     detected.add('postgresql');
   }
 
+  // MongoDB
+  if (hasDep(pkg, 'mongoose', 'mongodb', '@typegoose/typegoose')) {
+    detected.add('mongodb');
+  }
+
   // Azure
   if (
-    hasFile(dir, 'azure.yaml', 'bicep', '.azure') ||
+    hasFile(dir, 'azure.yaml', '.azure') ||
     hasExtension(dir, '.bicep') ||
     hasDep(pkg, '@azure/cosmos', '@azure/identity', '@azure/storage-blob')
   ) {
@@ -137,9 +164,8 @@ export async function detectStack(dir: string): Promise<DetectedTech[]> {
     detected.add('docker');
   }
 
-  // Swift / SwiftUI
+  // Swift / SwiftUI — check for .swift files or Package.swift (xcodeproj is a directory bundle, not a file)
   if (
-    hasExtension(dir, '.xcodeproj') ||
     hasExtension(dir, '.swift') ||
     hasFile(dir, 'Package.swift')
   ) {
@@ -152,9 +178,7 @@ export async function detectStack(dir: string): Promise<DetectedTech[]> {
   }
 
   // Python / Django
-  if (
-    hasFile(dir, 'pyproject.toml', 'requirements.txt', 'setup.py', 'Pipfile')
-  ) {
+  if (hasFile(dir, 'pyproject.toml', 'requirements.txt', 'setup.py', 'Pipfile')) {
     detected.add('python');
     if (hasFile(dir, 'manage.py')) {
       detected.add('django');
