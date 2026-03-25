@@ -23,7 +23,9 @@ export type DetectedTech =
   | 'python'
   | 'django'
   | 'rust'
-  | 'bun';
+  | 'bun'
+  | 'php'
+  | 'csharp';
 
 interface PackageJson {
   dependencies?: Record<string, string>;
@@ -188,6 +190,24 @@ export async function detectStack(dir: string): Promise<DetectedTech[]> {
   // Rust
   if (hasFile(dir, 'Cargo.toml')) {
     detected.add('rust');
+  }
+
+  // PHP — composer.json, artisan (Laravel), wp-config.php (WordPress), or .php files
+  if (
+    hasFile(dir, 'composer.json', 'composer.lock', 'artisan', 'wp-config.php', 'wp-config-sample.php') ||
+    hasExtension(dir, '.php')
+  ) {
+    detected.add('php');
+  }
+
+  // C# — .csproj, .sln, global.json, or .cs files
+  if (
+    hasFile(dir, 'global.json') ||
+    hasExtension(dir, '.csproj') ||
+    hasExtension(dir, '.sln') ||
+    hasExtension(dir, '.cs')
+  ) {
+    detected.add('csharp');
   }
 
   return Array.from(detected);
