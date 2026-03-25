@@ -7,6 +7,7 @@ import {
   SKILL_VITE, SKILL_VUE, SKILL_TAILWIND, SKILL_SWIFTUI, SKILL_STRIPE,
   SKILL_PRISMA, SKILL_POSTGRESQL, SKILL_MONGODB, SKILL_AZURE, SKILL_DOCKER,
   SKILL_GO, SKILL_PYTHON, SKILL_DJANGO, SKILL_RUST, SKILL_BUN,
+  SKILL_PHP, SKILL_CSHARP,
   AGENT_BACKEND, AGENT_FRONTEND, AGENT_IOS, AGENT_REVIEWER, AGENT_DEVOPS,
 } from './skills.js';
 
@@ -36,11 +37,13 @@ const SKILL_REGISTRY: SkillEntry[] = [
   { triggers: ['django'],                   files: [SKILL_DJANGO] },
   { triggers: ['rust'],                     files: [SKILL_RUST] },
   { triggers: ['bun'],                      files: [SKILL_BUN] },
+  { triggers: ['php'],                      files: [SKILL_PHP] },
+  { triggers: ['csharp'],                   files: [SKILL_CSHARP] },
 ];
 
 const AGENT_REGISTRY: SkillEntry[] = [
   {
-    triggers: ['nodejs', 'express', 'nextjs', 'typescript', 'prisma', 'postgresql', 'mongodb', 'go', 'python', 'django', 'rust', 'bun'],
+    triggers: ['nodejs', 'express', 'nextjs', 'typescript', 'prisma', 'postgresql', 'mongodb', 'go', 'python', 'django', 'rust', 'bun', 'php'],
     files: [AGENT_BACKEND],
   },
   {
