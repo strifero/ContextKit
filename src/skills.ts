@@ -1063,6 +1063,130 @@ bun test --watch
 `,
 };
 
+export const SKILL_PHP: SkillFile = {
+  path: 'skills/php/SKILL.md',
+  content: `---
+name: php
+description: PHP conventions — modern PHP patterns, Composer, error handling, and WordPress plugin development. Use whenever writing PHP code, building WordPress plugins or themes, managing dependencies with Composer, or structuring PHP projects.
+---
+
+# PHP Conventions
+
+## Modern PHP (8.1+)
+- Declare strict types at the top of every file: \`declare(strict_types=1);\`
+- Use typed properties, union types, and enums
+- Named arguments for clarity on multi-param functions
+- Constructor promotion to reduce boilerplate:
+\`\`\`php
+class UserService {
+    public function __construct(
+        private readonly UserRepository $repo,
+        private readonly LoggerInterface $logger,
+    ) {}
+}
+\`\`\`
+
+## Error Handling
+- Throw specific exceptions — never return \`false\` for errors in new code
+- Use a top-level exception handler; log full stack trace in production
+- Never suppress errors with \`@\` operator
+
+## Composer
+- \`composer.json\` defines dependencies — commit \`composer.lock\`
+- PSR-4 autoloading — namespace maps to directory structure
+- \`composer install --no-dev\` in production
+
+## Naming
+- Classes: \`PascalCase\` | Methods/variables: \`camelCase\` | Constants: \`SCREAMING_SNAKE_CASE\`
+- Files: one class per file, filename matches class name
+
+## WordPress Plugin Conventions
+- Prefix all functions, classes, hooks, and option keys with the plugin slug
+- Never access superglobals directly — use \`sanitize_*()\`, \`esc_*()\`, \`wp_verify_nonce()\`
+- Enqueue scripts/styles via \`wp_enqueue_scripts\` hook — never inline in HTML
+- Database writes always go through \`$wpdb->prepare()\` or the WP Options API
+- Avoid direct file writes — use the WP Filesystem API
+- Activation/deactivation hooks in the main plugin file only
+\`\`\`php
+register_activation_hook( __FILE__, 'myplugin_activate' );
+register_deactivation_hook( __FILE__, 'myplugin_deactivate' );
+\`\`\`
+- Options: use \`get_option()\` / \`update_option()\` for scalars; \`$wpdb->query()\` with manual serialization for complex arrays
+- REST API endpoints: register via \`rest_api_init\`, always declare \`permission_callback\`
+`,
+};
+
+export const SKILL_CSHARP: SkillFile = {
+  path: 'skills/csharp/SKILL.md',
+  content: `---
+name: csharp
+description: C# and .NET conventions — modern C# patterns, async/await, LINQ, and .NET MAUI cross-platform development. Use whenever writing C# code, building .NET applications, implementing MVVM, working with MAUI views, or handling async operations.
+---
+
+# C# / .NET Conventions
+
+## Modern C# (10+)
+- File-scoped namespaces: \`namespace MyApp.Services;\`
+- Nullable reference types enabled: \`<Nullable>enable</Nullable>\` in .csproj
+- Primary constructors (C# 12) for simple types
+- Pattern matching over type-checking chains:
+\`\`\`csharp
+var message = shape switch {
+    Circle c   => $"Circle r={c.Radius}",
+    Rectangle r => $"Rect {r.Width}x{r.Height}",
+    _           => "Unknown"
+};
+\`\`\`
+
+## Async/Await
+- All I/O-bound work is async — \`async Task<T>\` all the way up
+- Never \`.Result\` or \`.Wait()\` on Tasks — causes deadlocks in UI apps
+- Use \`ConfigureAwait(false)\` in library code
+- \`CancellationToken\` as the last parameter on every async method
+\`\`\`csharp
+public async Task<User?> GetUserAsync(string id, CancellationToken ct = default)
+{
+    return await _repo.FindByIdAsync(id, ct).ConfigureAwait(false);
+}
+\`\`\`
+
+## Error Handling
+- Specific exceptions — catch only what you can handle
+- Use \`ILogger<T>\` for structured logging (Microsoft.Extensions.Logging)
+- \`using\` / \`await using\` for all IDisposable resources
+
+## Naming
+- Classes/Methods/Properties: \`PascalCase\`
+- Local variables/parameters: \`camelCase\`
+- Private fields: \`_camelCase\`
+- Interfaces: \`IMyInterface\`
+- Async methods: suffix with \`Async\`
+
+## .NET MAUI Conventions
+- MVVM pattern: Views in \`.xaml\`, ViewModels inherit \`ObservableObject\` (CommunityToolkit.Mvvm)
+- Use \`[ObservableProperty]\` and \`[RelayCommand]\` source generators — no manual \`INotifyPropertyChanged\`
+\`\`\`csharp
+public partial class MainViewModel : ObservableObject
+{
+    [ObservableProperty] private string _title = string.Empty;
+    [ObservableProperty] private bool _isLoading;
+
+    [RelayCommand]
+    private async Task LoadAsync()
+    {
+        IsLoading = true;
+        try { Title = await _service.GetTitleAsync(); }
+        finally { IsLoading = false; }
+    }
+}
+\`\`\`
+- \`Shell\` for navigation — register routes in \`AppShell.xaml\`
+- Platform-specific code in \`Platforms/<platform>/\` — use \`#if` sparingly
+- \`IServiceCollection\` DI in \`MauiProgram.cs\` — no static service locators
+- Resources (colors, styles) in \`Resources/Styles/\` — no hardcoded values in XAML
+`,
+};
+
 // ---------------------------------------------------------------------------
 // Agents
 // ---------------------------------------------------------------------------
