@@ -2,21 +2,25 @@
 // ContextKit — CLI entry point
 
 import { parseArgs } from 'node:util';
-import { existsSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import pc from 'picocolors';
 import { detectStack } from './detect.js';
 import { generateFiles } from './generate.js';
 
-const VERSION = '1.0.0';
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const { version: VERSION } = JSON.parse(
+  readFileSync(resolve(__dirname, '../package.json'), 'utf-8')
+) as { version: string };
 
 const { values: flags } = parseArgs({
   options: {
-    dir:       { type: 'string',  short: 'd', default: process.cwd() },
-    force:     { type: 'boolean', short: 'f', default: false },
+    dir:         { type: 'string',  short: 'd', default: process.cwd() },
+    force:       { type: 'boolean', short: 'f', default: false },
     'no-agents': { type: 'boolean', default: false },
-    version:   { type: 'boolean', short: 'v', default: false },
-    help:      { type: 'boolean', short: 'h', default: false },
+    version:     { type: 'boolean', short: 'v', default: false },
+    help:        { type: 'boolean', short: 'h', default: false },
   },
   strict: false,
 });
