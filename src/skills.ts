@@ -238,6 +238,113 @@ export function MyComponent({ id, onDone }: Props) {
 `,
 };
 
+export const SKILL_VITE: SkillFile = {
+  path: 'skills/vite/SKILL.md',
+  content: `---
+name: vite
+description: Vite project conventions — config structure, environment variables, build optimization, and plugin setup. Use whenever configuring Vite, setting up plugins, handling env vars, or troubleshooting builds.
+---
+
+# Vite Conventions
+
+## Config Structure
+\`\`\`typescript
+// vite.config.ts
+import { defineConfig } from 'vite';
+
+export default defineConfig({
+  plugins: [],
+  resolve: {
+    alias: { '@': '/src' },
+  },
+  build: {
+    target: 'es2022',
+    sourcemap: false, // true only for staging/debug
+  },
+});
+\`\`\`
+
+## Environment Variables
+- Prefix with \`VITE_\` to expose to client: \`VITE_API_URL\`
+- Access via \`import.meta.env.VITE_API_URL\`
+- Server-only vars (no prefix) are never bundled
+- Use \`.env.local\` for local overrides — never commit it
+
+## Dev vs Production
+- \`import.meta.env.DEV\` — true in dev server
+- \`import.meta.env.PROD\` — true in production build
+- \`import.meta.env.MODE\` — \`"development"\` | \`"production"\` | custom
+
+## Build Optimization
+- Use dynamic \`import()\` for route-level code splitting
+- \`build.rollupOptions.output.manualChunks\` for vendor splitting
+- \`vite-bundle-visualizer\` to diagnose large bundles
+
+## Common Plugins
+- \`@vitejs/plugin-react\` — React fast refresh
+- \`@vitejs/plugin-vue\` — Vue SFCs
+- \`vite-tsconfig-paths\` — TypeScript path aliases
+`,
+};
+
+export const SKILL_VUE: SkillFile = {
+  path: 'skills/vue/SKILL.md',
+  content: `---
+name: vue
+description: Vue 3 Composition API patterns, component structure, reactivity, and routing. Use whenever building Vue components, managing reactive state, composing logic, or configuring Vue Router. Also trigger for Pinia, script setup, or Nuxt questions.
+---
+
+# Vue 3 Conventions
+
+## Component Structure — always \`<script setup>\`
+\`\`\`vue
+<script setup lang="ts">
+interface Props { id: string; }
+const props = defineProps<Props>();
+const emit = defineEmits<{ done: [] }>();
+
+const count = ref(0);
+const doubled = computed(() => count.value * 2);
+</script>
+
+<template>
+  <div>{{ doubled }}</div>
+</template>
+\`\`\`
+
+## Reactivity
+- \`ref()\` for primitives, \`reactive()\` for objects (prefer \`ref\` for consistency)
+- Never destructure \`reactive()\` — use \`toRefs()\` if needed
+- \`computed()\` for derived values — never recompute in template
+
+## Composables
+\`\`\`typescript
+// composables/useUser.ts
+export function useUser(id: string) {
+  const user = ref<User | null>(null);
+  const isLoading = ref(false);
+  async function load() { ... }
+  return { user, isLoading, load };
+}
+\`\`\`
+- One composable per concern, prefixed \`use\`
+
+## State — Pinia
+\`\`\`typescript
+export const useCartStore = defineStore('cart', () => {
+  const items = ref<Item[]>([]);
+  function add(item: Item) { items.value.push(item); }
+  return { items, add };
+});
+\`\`\`
+- Composition API style stores only (no Options API stores)
+
+## Router
+- Lazy-load routes: \`component: () => import('./views/Home.vue')\`
+- Navigation guards in \`router/index.ts\`, not in components
+`,
+};
+
 export const SKILL_TAILWIND: SkillFile = {
   path: 'skills/tailwind/SKILL.md',
   content: `---
@@ -363,7 +470,6 @@ description: Stripe integration — payments, subscriptions, webhooks, and the c
 \`\`\`typescript
 import Stripe from 'stripe';
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: '2024-12-18.acacia',
   typescript: true,
 });
 \`\`\`
@@ -520,6 +626,67 @@ try {
 } catch (e) {
   await client.query('ROLLBACK'); throw e;
 } finally { client.release(); }
+\`\`\`
+`,
+};
+
+export const SKILL_MONGODB: SkillFile = {
+  path: 'skills/mongodb/SKILL.md',
+  content: `---
+name: mongodb
+description: MongoDB and Mongoose conventions — schema design, queries, indexes, and connection management. Use whenever defining Mongoose models, writing queries, handling ObjectIds, or optimizing MongoDB operations.
+---
+
+# MongoDB / Mongoose Conventions
+
+## Connection — Singleton
+\`\`\`typescript
+import mongoose from 'mongoose';
+
+let isConnected = false;
+
+export async function connectDb(): Promise<void> {
+  if (isConnected) return;
+  await mongoose.connect(process.env.MONGODB_URI!);
+  isConnected = true;
+}
+\`\`\`
+- Call \`connectDb()\` at startup — never per-request
+
+## Schema Design
+\`\`\`typescript
+const userSchema = new Schema({
+  email:     { type: String, required: true, unique: true, lowercase: true },
+  createdAt: { type: Date, default: Date.now },
+}, { timestamps: true });
+
+export const User = mongoose.model('User', userSchema);
+\`\`\`
+- \`{ timestamps: true }\` adds \`createdAt\` + \`updatedAt\` automatically
+- Always \`lowercase: true\` on email fields
+
+## Queries
+\`\`\`typescript
+// Lean for read-only — plain JS object, faster
+const user = await User.findById(id).lean();
+
+// Select only needed fields
+const users = await User.find({ active: true }).select('email name').lean();
+\`\`\`
+
+## Indexes
+\`\`\`typescript
+userSchema.index({ email: 1 });
+userSchema.index({ createdAt: -1 });
+// Compound — matches query patterns exactly
+userSchema.index({ userId: 1, createdAt: -1 });
+\`\`\`
+
+## ObjectId Handling
+\`\`\`typescript
+import { Types } from 'mongoose';
+// Validate before querying
+if (!Types.ObjectId.isValid(id)) throw new Error('Invalid ID');
 \`\`\`
 `,
 };
@@ -722,6 +889,69 @@ async def get_user(user_id: str) -> User:
 `,
 };
 
+export const SKILL_DJANGO: SkillFile = {
+  path: 'skills/django/SKILL.md',
+  content: `---
+name: django
+description: Django conventions — settings structure, models, views, migrations, and REST Framework patterns. Use whenever building Django views, defining models, writing migrations, configuring settings, or implementing DRF serializers and viewsets.
+---
+
+# Django Conventions
+
+## Settings Structure
+- Split settings: \`settings/base.py\`, \`settings/dev.py\`, \`settings/prod.py\`
+- Never commit secrets — use \`django-environ\` or \`python-decouple\`
+\`\`\`python
+# settings/base.py
+import environ
+env = environ.Env()
+SECRET_KEY = env('SECRET_KEY')
+DATABASES = { 'default': env.db() }
+\`\`\`
+
+## Models
+\`\`\`python
+class Article(models.Model):
+    title      = models.CharField(max_length=255)
+    slug       = models.SlugField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes  = [models.Index(fields=['slug'])]
+\`\`\`
+- Always \`auto_now_add\` + \`auto_now\` on timestamp fields
+- \`__str__\` on every model
+
+## Migrations
+\`\`\`bash
+python manage.py makemigrations
+python manage.py migrate
+\`\`\`
+- Never edit migration files after they're applied in production
+- One logical change per migration
+
+## Django REST Framework
+\`\`\`python
+class ArticleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model  = Article
+        fields = ['id', 'title', 'slug', 'created_at']
+
+class ArticleViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset           = Article.objects.all()
+    serializer_class   = ArticleSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+\`\`\`
+
+## Query Optimization
+- Use \`select_related()\` for FK/OneToOne, \`prefetch_related()\` for M2M
+- \`only()\` / \`defer()\` to limit fetched columns on large models
+- Django Debug Toolbar in dev to catch N+1 queries
+`,
+};
+
 export const SKILL_RUST: SkillFile = {
   path: 'skills/rust/SKILL.md',
   content: `---
@@ -774,6 +1004,62 @@ async fn get_user(id: &str) -> Result<User, AppError> { ... }
 - Prefer borrowing (\`&T\`) over cloning
 - Clone explicitly only when ownership is truly needed
 - Use \`Arc<T>\` for shared state across threads
+`,
+};
+
+export const SKILL_BUN: SkillFile = {
+  path: 'skills/bun/SKILL.md',
+  content: `---
+name: bun
+description: Bun runtime conventions — API server, file I/O, built-in test runner, and package management. Use whenever writing Bun scripts, configuring a Bun project, using Bun.serve(), or running tests with bun:test.
+---
+
+# Bun Conventions
+
+## Project Setup
+- \`bun init\` — scaffolds \`package.json\`, \`tsconfig.json\`, \`index.ts\`
+- \`bunx\` instead of \`npx\`
+- Lockfile: \`bun.lockb\` — commit it
+
+## HTTP Server
+\`\`\`typescript
+Bun.serve({
+  port: 3000,
+  async fetch(req) {
+    const url = new URL(req.url);
+    if (url.pathname === '/health') return new Response('ok');
+    return new Response('Not found', { status: 404 });
+  },
+});
+\`\`\`
+- No need for Express — \`Bun.serve\` is fast enough for most APIs
+
+## File I/O
+\`\`\`typescript
+// Read
+const text = await Bun.file('data.txt').text();
+const json = await Bun.file('config.json').json();
+
+// Write
+await Bun.write('output.txt', 'hello');
+\`\`\`
+
+## Tests — bun:test
+\`\`\`typescript
+import { describe, it, expect } from 'bun:test';
+
+describe('math', () => {
+  it('adds', () => expect(1 + 1).toBe(2));
+});
+\`\`\`
+\`\`\`bash
+bun test
+bun test --watch
+\`\`\`
+
+## Environment Variables
+- \`Bun.env.MY_VAR\` (preferred) or \`process.env.MY_VAR\`
+- Auto-loads \`.env\` — no dotenv package needed
 `,
 };
 
