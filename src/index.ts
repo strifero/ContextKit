@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import pc from 'picocolors';
 import { detectStack } from './detect.js';
 import { generateFiles } from './generate.js';
+import { updateProject } from './update.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { version: VERSION } = JSON.parse(
@@ -18,6 +19,7 @@ const { values: flags } = parseArgs({
   options: {
     dir:         { type: 'string',  short: 'd', default: process.cwd() },
     force:       { type: 'boolean', short: 'f', default: false },
+    update:      { type: 'boolean', short: 'u', default: false },
     'no-agents': { type: 'boolean', default: false },
     version:     { type: 'boolean', short: 'v', default: false },
     help:        { type: 'boolean', short: 'h', default: false },
@@ -40,19 +42,23 @@ ${pc.bold('Usage:')}
 ${pc.bold('Options:')}
   -d, --dir <path>   Project directory to analyze (default: current directory)
   -f, --force        Overwrite existing .claude/ directory
+  -u, --update       Re-sync skills and agents, preserving your edits to CLAUDE.md
   --no-agents        Skip agent generation
   -v, --version      Print version
   -h, --help         Show this help
 
 ${pc.bold('Examples:')}
-  npx contextkit
-  npx contextkit --dir ./my-project
-  npx contextkit --force
+  npx contextkit                        # First run — generate everything
+  npx contextkit --update               # Stack changed — sync without losing edits
+  npx contextkit --force                # Nuke and regenerate from scratch
+  npx contextkit --update --dir ./app   # Update a specific project
 
 ${pc.dim('by Strife Technologies — https://strifetech.com')}
 `);
   process.exit(0);
 }
+
+// ── Validate ─────────────────────────────────────────────────────
 
 const projectDir = resolve(flags.dir as string);
 
@@ -61,36 +67,87 @@ if (!existsSync(projectDir)) {
   process.exit(1);
 }
 
+if (flags.force && flags.update) {
+  console.error(pc.red('\n  Cannot use --force and --update together.\n'));
+  process.exit(1);
+}
+
 const claudeDir = resolve(projectDir, '.claude');
-if (existsSync(claudeDir) && !flags.force) {
-  console.log(pc.yellow(`\n  .claude/ already exists. Use --force to overwrite.\n`));
+const claudeExists = existsSync(claudeDir);
+
+// --update requires existing .claude/
+if (flags.update && !claudeExists) {
+  console.error(pc.red('\n  Nothing to update — .claude/ does not exist. Run contextkit first.\n'));
+  process.exit(1);
+}
+
+// Existing .claude/ without a flag — suggest options
+if (claudeExists && !flags.force && !flags.update) {
+  console.log(pc.yellow(`\n  .claude/ already exists.`));
+  console.log(`  Use ${pc.bold('--update')} to sync skills (preserves your edits)`);
+  console.log(`  Use ${pc.bold('--force')} to overwrite everything\n`);
   process.exit(0);
 }
+
+// ── Detect ───────────────────────────────────────────────────────
 
 console.log(`\n${pc.bold('ContextKit')} ${pc.dim(`v${VERSION}`)}\n`);
 console.log(`  Analyzing ${pc.cyan(projectDir)}\n`);
 
-// Detect stack
 const detected = await detectStack(projectDir);
 
 if (detected.length === 0) {
-  console.log(pc.yellow('  No recognized tech stack detected. Generating generic CLAUDE.md.\n'));
+  console.log(pc.yellow('  No recognized tech stack detected.\n'));
 } else {
   console.log(`  ${pc.green('✓')} Detected: ${detected.map(d => pc.bold(d)).join(', ')}\n`);
 }
 
-// Generate files
-const result = await generateFiles({
-  projectDir,
-  detected,
-  includeAgents: !flags['no-agents'],
-});
+// ── Execute ──────────────────────────────────────────────────────
 
-console.log(`\n  ${pc.green('✓')} Generated ${result.fileCount} files in ${pc.cyan('.claude/')}\n`);
+if (flags.update) {
+  // Update mode — sync files, preserve user content
+  const result = await updateProject({
+    projectDir,
+    detected,
+    includeAgents: !flags['no-agents'],
+  });
 
-for (const file of result.files) {
-  console.log(`    ${pc.dim('+')} ${file}`);
+  if (result.added.length > 0) {
+    console.log(`  ${pc.green('+')} Added:`);
+    for (const f of result.added) console.log(`    ${pc.green('+')} ${f}`);
+  }
+  if (result.removed.length > 0) {
+    console.log(`  ${pc.red('−')} Removed:`);
+    for (const f of result.removed) console.log(`    ${pc.red('−')} ${f}`);
+  }
+  if (result.kept.length > 0) {
+    console.log(`  ${pc.dim('=')} Unchanged: ${result.kept.length} files`);
+  }
+  if (result.claudeMdUpdated) {
+    console.log(`  ${pc.green('✓')} CLAUDE.md updated (your edits preserved)`);
+  }
+
+  const total = result.added.length + result.removed.length;
+  if (total === 0 && result.claudeMdUpdated) {
+    console.log(`\n  ${pc.bold('Up to date.')} Stack line and skill lists refreshed.\n`);
+  } else if (total === 0) {
+    console.log(`\n  ${pc.bold('Already up to date.')} Nothing changed.\n`);
+  } else {
+    console.log(`\n  ${pc.bold('Done.')} ${result.added.length} added, ${result.removed.length} removed.\n`);
+  }
+} else {
+  // Fresh generate (first run or --force)
+  const result = await generateFiles({
+    projectDir,
+    detected,
+    includeAgents: !flags['no-agents'],
+  });
+
+  console.log(`\n  ${pc.green('✓')} Generated ${result.fileCount} files in ${pc.cyan('.claude/')}\n`);
+  for (const file of result.files) {
+    console.log(`    ${pc.dim('+')} ${file}`);
+  }
+  console.log(`\n  ${pc.bold('Done.')} Claude Code will load these skills automatically.\n`);
 }
 
-console.log(`\n  ${pc.bold('Done.')} Claude Code will load these skills automatically.\n`);
 console.log(`  ${pc.dim('by Strife Technologies — https://strifetech.com')}\n`);
