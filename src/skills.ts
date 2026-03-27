@@ -1181,7 +1181,7 @@ public partial class MainViewModel : ObservableObject
 }
 \`\`\`
 - \`Shell\` for navigation — register routes in \`AppShell.xaml\`
-- Platform-specific code in \`Platforms/<platform>/\` — use \`#if` sparingly
+- Platform-specific code in \`Platforms/<platform>/\` — use \`#if\` sparingly
 - \`IServiceCollection\` DI in \`MauiProgram.cs\` — no static service locators
 - Resources (colors, styles) in \`Resources/Styles/\` — no hardcoded values in XAML
 `,

@@ -64,6 +64,13 @@ Don't see yours? [Open an issue](https://github.com/strifero/ContextKit/issues) 
 npx contextkit
 ```
 
+**Stack changed? Update without losing your edits:**
+```bash
+npx contextkit --update
+```
+
+This re-detects your stack, adds skills for new tech, removes skills for dropped tech, and refreshes the skill/agent lists in CLAUDE.md — while preserving everything you've written (Architecture, Data Model, Conventions, etc.).
+
 **Specify a directory:**
 ```bash
 npx contextkit --dir /path/to/project
@@ -87,6 +94,8 @@ npx contextkit --no-agents
 2. **Detects** your tech stack automatically
 3. **Selects** the relevant skills from a hand-crafted library
 4. **Generates** `.claude/CLAUDE.md`, `.claude/skills/`, and `.claude/agents/`
+
+With `--update`, ContextKit re-runs detection and syncs your `.claude/` directory non-destructively — new skills are added, stale ones removed, and your hand-written sections in CLAUDE.md are preserved.
 
 Each skill file follows the [Agent Skills open standard](https://platform.claude.com/docs/en/agents-and-tools/agent-skills/overview) — compatible with Claude Code, Cursor, Codex CLI, and any other agent that supports `SKILL.md`.
 
